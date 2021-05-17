@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>chatApp</title>
+  <style>
+
+ /* チャット表示領域をスクロール可能 */
+body{
+  background-color: lemonchiffon;
+}
+.container{
+    width: 70%;
+    margin: 30px auto;
+}
+
+#output{
+    height: 80vh;
+    background: #8DB4E5;
+    overflow: scroll;
+}
+
+#output li {      
+      max-width: 300px;
+      border-radius: 20px;
+      padding: 10px 30px;
+      background: #61E739;
+      color: #001A32;
+      font-weight: bold;
+      list-style: none;
+      margin-bottom: 10px;
+
+    } */
+
+.message-area{
+  height: 10vh;
+  display: flex;
+}
+.message-area-text{
+  width: 80%;
+}
+.message-area-button{
+  width: 20%;
+}
+.message-area-text textarea{
+  width: 100%;
+  height: 100%;
+  resize: none; 
+  border: 1px solid #ddd; 
+  box-sizing: border-box; 
+
+}
+
+.message-area-button button {
+width: 100%;
+height: 100%;
+background: #61E739;
+color: #fff;
+font-size: 2.0rem;
+font-weight: bold;
+border: 0;
+border-radius: 20px;
+font-size: 20px;
+}
+.message-container {
+  display: flex;
+  margin: 0 10px;
+}
+
+
+.message-container-you {
+justify-content: flex-start;
+}
+
+
+.message-container-me {
+justify-content: flex-end;
+}
+.chat-time {
+      color: #33415B; 
+      align-self: flex-end; 
+}
+/* 
+.message-container-you .chat-time {
+order: 2; 
+margin-left : 10px;
+} */ */
+
+.message-container-me .chat-time {
+  margin-right : 10px;
+}
+
+  .chat-message {
+      max-width: 300px;
+      border-radius: 20px;
+      padding: 10px 30px;
+      font-weight: bold;
+      color: #001A32;
+    }
+
+.message-container-you .chat-message {
+background: #fff;
+}
+
+.message-container-me .chat-message {
+background: #61E739;
+}
+.message-person {
+      display: flex;
+      margin: 5px 0;
+    }
+.message-person input{
+  display: none;
+}
+.message-person label {
+      display: block;
+      cursor: pointer;
+      width: 60px;
+      font-size: 1.3rem;
+      text-align: center;
+      padding: 10px;
+      background: #BDC3C7;
+      color: #fff;
+    }
+
+    .message-person input[type="radio"]:checked + label {
+      background: #61E739;
+    } 
+h1{
+  font-size: 22px;
+}
+
+
+  </style>
+</head>
+
+<body>
+  
+  <h1>LINE風チャット</h1>
+  <img src="img/chatchat.jpg" alt="" height="150px,width:200px">
+  <!-- 入力場所を作成しよう -->
+  
+
+<div class="container">
+    <div id="output" >
+    </div>
+
+    <label for="name">name</label> 
+    <input type="text" id="name">
+
+    <div class="message-person">
+      <input type="radio" id="me"  value="me" name="person" checked="checked">
+      <label for="me">自分</label>
+      <input type="radio"  id="you" value="you" name="person">
+      <label for="you">相手</label>
+    </div>
+
+
+      <div class="message-area">
+        <div class="message-area-text">
+          <textarea name="" id="text" cols="30" rows="10"></textarea>
+        </div>
+        <div class="message-area-button">
+            <button id="send" class="disabled-button">送信</button>
+      </div>
+</div>
+
+  <!-- データ出力場所 リスト表示-->
+  
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+  <!-- 以下にfirebaseのコードを貼り付けよう -->
+  <!-- The core Firebase JS SDK is always required and must be listed first -->
+
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-analytics.js"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  var firebaseConfig = {
+    apiKey: 
+    authDomain: "chat-app14-f1c86.firebaseapp.com",
+    projectId: "chat-app14-f1c86",
+    storageBucket: "chat-app14-f1c86.appspot.com",
+    messagingSenderId: "304828101815",
+    appId: "1:304828101815:web:380cfe5224348403e6c932",
+    measurementId: "G-5WW29ZFYBC"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+
+var db=firebase.firestore().collection('chat14')
+// MSG送受信準備
+let newPostRef = firebase.database().ref();
+</script>
+<!-- ここまでfirebase コピー-->
+
+
+
+<!-- JS入力ここから -->
+  <script>
+    // 日時をいい感じの形式にする関数
+    function convertFromFirestoreTimestampToDatetime(timestamp) {
+      const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+      const Y = _d.getFullYear();
+      const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+      const d = _d.getDate().toString().padStart(2, '0');
+      const H = _d.getHours().toString().padStart(2, '0');
+      const i = _d.getMinutes().toString().padStart(2, '0');
+      const s = _d.getSeconds().toString().padStart(2, '0');
+      return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+    }
+
+
+$('#send').on('click',function () {
+  const data ={
+// dbが送信先 送信データはオブジェクトの形 // inputの入力値
+// textareaの入力値
+name: $('#name').val(),
+text: $('#text').val(),
+time: firebase.firestore.FieldValue.serverTimestamp(),
+};// 登録日時
+db.add(data);
+// 送信後にtextareaを空にする処理 
+$('#text').val('');
+
+
+});
+
+
+// 送信処理2
+$('#text').on('keydown',function(e){
+if(e.keyCode==13){
+  const data ={
+// dbが送信先 送信データはオブジェクトの形 // inputの入力値
+// textareaの入力値
+name: $('#name').val(),
+text: $('#text').val(),
+time: firebase.firestore.FieldValue.serverTimestamp(),
+};// 登録日時
+db.add(data);
+// 送信後にtextareaを空にする処理 
+$('#text').val('');
+
+}
+
+});
+
+ // 受信処理の記述
+  db.orderBy('time', 'asc').onSnapshot(function (querySnapshot) {
+
+  const dataArray = []; 
+
+  querySnapshot.docs.forEach(function (doc) {
+// 扱いにくいデータをただのオブジェクトの配列にする
+  const data = 
+    { id: doc.id,
+    data: doc.data(),
+  };
+    dataArray.push(data); 
+  });
+
+
+// 配列をダグにいれる
+  const tagArray = [];
+  dataArray.forEach(function (data) {
+  tagArray.push(`
+    <li id=${data.id}>
+      <p>${data.data.text}</p>
+        <p>${data.data.name}</p> 
+        <p>${convertFromFirestoreTimestampToDatetime(data.data.time.seconds)}</p> 
+
+    </li>
+  `);
+});
+  console.log(tagArray);
+// 画面に表示
+  $('#output').html(tagArray); 
+  // $('#output').css('background-color','chartreuse'); 
+
+});
+
+
+$(function() {
+    $('.message-area-text').on('keypress', (e) => {
+      if (e.which === 13) {
+        addChat()
+        return false; 
+      }
+    })
+
+    // 送信ボタンがクリックされたら
+    $('#send').on('click', addChat)
+
+    function addChat() {
+      const messageText = $('#text').val()
+
+      if (messageText === '') {
+        return false;
+      }
+  // チャットエリアの要素を取得
+  const chatArea = $('#output')
+
+// メッセージを表示するdiv要素
+const messageContainer = $('<div></div>').addClass('message-container')
+
+// 自分 or 相手どちらにメッセージを送る予定かを取得
+const messagePerson = $('input[name="person"]:checked').val()
+
+// 自分の時は自分用のメッセージのクラスをつける
+if (messagePerson === 'me') {
+  messageContainer.addClass('message-container-me')
+} else {
+  // 相手の時は相手用のメッセージのクラスをつける
+  messageContainer.addClass('message-container-you')
+}
+
+// チャットメッセージ用の装飾をしたクラスを当てたpタグを追加
+const message = $('<p></p>').addClass('chat-message').text(messageText)
+
+// 現在時間のDateオブジェクトを取得する
+const nowDate = new Date()
+const hour    = (nowDate.getHours() >= 10) ? nowDate.getHours() : '0' + nowDate.getHours()
+const minutes    = (nowDate.getMinutes() >= 10) ? nowDate.getMinutes() : '0' + nowDate.getMinutes()
+
+
+// 常に最下部までスクロールしておく
+output.scrollTop(chatArea[0].scrollHeight)
+
+}
+})
+
+
+
+</script>
+</body>
+
+</html>
